@@ -1,19 +1,16 @@
-# Desafio-VC
+# **DESAFIO-VC**
 
-# DESAFIO-VC
-
-## Configuração do Banco de Dados
+## **Configuração do Banco de Dados**
 
 Adicione a seguinte variável de ambiente ao seu arquivo `.env` para configurar a conexão com o banco de dados:
 
-```env
+```mysql
 DB_CONNECTION_STRING=server=localhost;port=<SUA PORTA>;database=<SUA DATABASE>;user=<SEU USUARIO>;password=<SUA SENHA DO USUARIO>;
 ```
 
+#### **Comando SQL para criação da tabela:**
 
-### Comando SQL para criação da tabela:
-
-```sql
+```mysql
 CREATE TABLE `table_produtos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `Nome` varchar(50) NOT NULL,
@@ -23,3 +20,4 @@ CREATE TABLE `table_produtos` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `Nome` (`Nome`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+```
