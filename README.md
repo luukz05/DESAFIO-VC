@@ -4,7 +4,7 @@
 
 Adicione a seguinte variável de ambiente ao seu arquivo `.env` para configurar a conexão com o banco de dados:
 
-```mysql
+```text
 DB_CONNECTION_STRING=server=localhost;port=<SUA PORTA>;database=<SUA DATABASE>;user=<SEU USUARIO>;password=<SUA SENHA DO USUARIO>;
 ```
 
