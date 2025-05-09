@@ -1,8 +1,28 @@
 import { useEffect, useState } from "react";
+import Modal from "../../components/Modal.jsx";
+
 import api from "../services/api.js";
 import "../styles/Home.css"; // Ajuste o caminho conforme a estrutura do seu projeto
+import { auto } from "openai/_shims/registry.mjs";
 
 function App() {
+  const cellStyle = {
+    padding: "0.75rem",
+    border: "1px solid #ddd",
+    verticalAlign: "middle",
+    textAlign: "center",
+  };
+
+  const buttonStyle = {
+    padding: "0.5rem 1rem",
+    border: "none",
+    borderRadius: "6px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    fontWeight: "bold",
+    cursor: "pointer",
+  };
+
   const [produtos, setProdutos] = useState([]);
   const [novoProduto, setNovoProduto] = useState({
     nome: "",
@@ -57,6 +77,7 @@ function App() {
     try {
       await api.delete(`/deletar_produto/${id}`);
       carregarProdutos();
+      window.location.reload(); // Atualiza a página após a exclusão
     } catch (err) {
       console.error("Erro ao deletar produto", err);
     }
@@ -64,148 +85,218 @@ function App() {
 
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
-      <h1>Gerenciamento de Produtos</h1>
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <h1>Gerenciamento de Produtos</h1>
+        <div style={{ display: "flex", gap: ".5rem" }}>
+          <button
+            style={{
+              padding: "8px",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+            }}
+            onClick={() => (window.location.href = "/perfil")}
+          >
+            Perfil
+          </button>
+          <button
+            style={{
+              padding: "8px",
+              backgroundColor: "#dc3545",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+            }}
+            onClick={() => (window.location.href = "/")}
+          >
+            Sair
+          </button>
+        </div>
+      </header>
 
+      <hr />
+      <h2
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        Adicionar Produto
+      </h2>
+      {/* Formulário de criação */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        <input
+          placeholder="Nome"
+          value={novoProduto.nome}
+          onChange={(e) =>
+            setNovoProduto({ ...novoProduto, nome: e.target.value })
+          }
+          style={{
+            padding: "0.8rem",
+            borderBottomLeftRadius: "8px",
+            borderTopLeftRadius: "8px",
+            border: "1px solid #ccc",
+          }}
+        />
+        <input
+          placeholder="Descrição"
+          value={novoProduto.descricao}
+          onChange={(e) =>
+            setNovoProduto({ ...novoProduto, descricao: e.target.value })
+          }
+          maxLength={50}
+          style={{
+            padding: "0.8rem",
+            border: "1px solid #ccc",
+          }}
+        />
+        <input
+          placeholder="Valor"
+          type="number"
+          step="0.01"
+          value={novoProduto.valor}
+          onChange={(e) =>
+            setNovoProduto({ ...novoProduto, valor: e.target.value })
+          }
+          style={{
+            padding: "0.8rem",
+
+            border: "1px solid #ccc",
+          }}
+        />
+        <input
+          placeholder="Quantidade"
+          type="number"
+          value={novoProduto.quantidade}
+          onChange={(e) =>
+            setNovoProduto({ ...novoProduto, quantidade: e.target.value })
+          }
+          style={{
+            padding: "0.8rem",
+            border: "1px solid #ccc",
+          }}
+        />
+        <button
+          onClick={criarProduto}
+          style={{
+            padding: "0.8rem",
+            borderBottomRightRadius: "8px",
+            borderTopRightRadius: "8px",
+            border: "none",
+            backgroundColor: "#007bff",
+            color: "white",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Criar
+        </button>
+      </div>
+      {/* Modal de edição */}
+      <Modal
+        isOpen={!!editandoProduto}
+        onClose={() => setEditandoProduto(null)}
+        produto={editandoProduto}
+        onChange={(updated) => setEditandoProduto(updated)}
+        onSave={atualizarProduto}
+      />
       {/* Lista de produtos */}
-      <ul>
-        {produtos.map((p) => (
-          <table key={p.id} style={{ width: "100%", marginBottom: "1rem" }}>
-            <thead>
-              <tr>
-                <th style={{ width: "10%" }}>Código</th>
-                <th style={{ width: "20%" }}>Produto</th>
-                <th style={{ width: "10%" }}>Valor</th>
-                <th style={{ width: "10%" }}>Quantidade</th>
-                <th style={{ width: "50%" }}>Descrição</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <strong>{p.id}</strong>
+      <div style={{ overflowX: "auto", marginTop: "2rem" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            border: "1px solid #ddd",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <thead>
+            <tr style={{ backgroundColor: "#f5f5f5", textAlign: "left" }}>
+              <th style={{ ...cellStyle, width: "2%" }}>Código</th>
+              <th style={{ ...cellStyle, width: "10%" }}>Produto</th>
+              <th style={{ ...cellStyle, width: "5%" }}>Valor</th>
+              <th style={{ ...cellStyle, width: "5%" }}>Quantidade</th>
+              <th
+                style={{
+                  ...cellStyle,
+                  width: "80%",
+                }}
+              >
+                Descrição
+              </th>
+
+              <th
+                style={{
+                  ...cellStyle,
+                  borderTopRightRadius: "8px",
+                  width: "10%",
+                }}
+              >
+                Ações
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {produtos.map((p, index) => (
+              <tr
+                key={p.id}
+                style={{
+                  backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
+                }}
+              >
+                <td style={cellStyle}>{p.id}</td>
+                <td style={cellStyle}>{p.nome}</td>
+                <td style={cellStyle}>
+                  {new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(p.valor)}
                 </td>
-                <td>
-                  <strong>{p.nome}</strong>
+                <td style={cellStyle}>{p.quantidade} un.</td>
+                <td
+                  style={{
+                    ...cellStyle,
+                    textAlign: "left",
+                  }}
+                >
+                  {p.descricao}
                 </td>
-                <td>
-                  <strong>
-                    {new Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(p.valor)}
-                  </strong>
-                </td>
-                <td>
-                  <strong>{p.quantidade}</strong>
-                </td>
-                <td>
-                  <strong>{p.descricao}</strong>
-                </td>
-                <td>
+                <td style={{ ...cellStyle, display: "flex", gap: "0.5rem" }}>
                   <button
                     onClick={() => setEditandoProduto(p)}
-                    style={{ marginLeft: 10 }}
+                    style={buttonStyle}
                   >
                     Editar
                   </button>
                   <button
                     onClick={() => deletarProduto(p.id)}
-                    style={{ marginLeft: 5 }}
+                    style={{ ...buttonStyle, backgroundColor: "#dc3545" }}
                   >
                     Deletar
                   </button>
                 </td>
               </tr>
-            </tbody>
-          </table>
-        ))}
-      </ul>
-
-      <hr />
-
-      {/* Formulário de criação */}
-      <h2>Adicionar Produto</h2>
-      <input
-        placeholder="Nome"
-        value={novoProduto.nome}
-        onChange={(e) =>
-          setNovoProduto({ ...novoProduto, nome: e.target.value })
-        }
-      />
-      <input
-        placeholder="Descrição"
-        value={novoProduto.descricao}
-        onChange={(e) =>
-          setNovoProduto({ ...novoProduto, descricao: e.target.value })
-        }
-      />
-      <input
-        placeholder="Valor"
-        type="number"
-        step="0.01"
-        value={novoProduto.valor}
-        onChange={(e) =>
-          setNovoProduto({ ...novoProduto, valor: e.target.value })
-        }
-      />
-      <input
-        placeholder="Quantidade"
-        type="number"
-        value={novoProduto.quantidade}
-        onChange={(e) =>
-          setNovoProduto({ ...novoProduto, quantidade: e.target.value })
-        }
-      />
-      <button onClick={criarProduto}>Criar</button>
-
-      {/* Modal de edição */}
-      {editandoProduto && (
-        <div
-          style={{
-            marginTop: "2rem",
-            border: "1px solid #ccc",
-            padding: "1rem",
-          }}
-        >
-          <h2>Editar Produto</h2>
-          <input
-            value={editandoProduto.nome}
-            onChange={(e) =>
-              setEditandoProduto({ ...editandoProduto, nome: e.target.value })
-            }
-          />
-          <input
-            value={editandoProduto.descricao}
-            onChange={(e) =>
-              setEditandoProduto({
-                ...editandoProduto,
-                descricao: e.target.value,
-              })
-            }
-          />
-          <input
-            type="number"
-            step="0.01"
-            value={editandoProduto.valor}
-            onChange={(e) =>
-              setEditandoProduto({ ...editandoProduto, valor: e.target.value })
-            }
-          />
-          <input
-            type="number"
-            value={editandoProduto.quantidade}
-            onChange={(e) =>
-              setEditandoProduto({
-                ...editandoProduto,
-                quantidade: e.target.value,
-              })
-            }
-          />
-          <button onClick={atualizarProduto}>Salvar</button>
-          <button onClick={() => setEditandoProduto(null)}>Cancelar</button>
-        </div>
-      )}
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
