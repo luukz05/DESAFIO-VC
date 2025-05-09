@@ -1,10 +1,17 @@
 ﻿namespace ProdutosCRUD.Routes;
 using Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 public static class ProdutosRoute
 
 {
+    public class LoginDTO
+    {
+        public string Usuario { get; set; }
+        public string Senha { get; set; }
+    }
+
     public static void ProductRoutes(this WebApplication app) //extension methosd
     {
         app.MapGet("/", () => "API funcionando!"); //rota teste
@@ -62,6 +69,48 @@ public static class ProdutosRoute
             
             return Results.Ok($"Produto com ID {id} foi deletado com sucesso.");
         });
+        
+        app.MapPost("register", async (Usuario_Class usuario, AppDbContext db) =>
+        {
+            var hasher = new PasswordHasher<Usuario_Class>();
+            usuario.Senha = hasher.HashPassword(usuario, usuario.Senha); //define a senha de usuario como o hash da senha para o usuario especificado
+            usuario.Role = "user";
+            db.Usuarios.Add(usuario); // Adiciona o usuário ao banco
+            await db.SaveChangesAsync(); // Salva as mudanças
+
+            return Results.Created($"/usuarios/{usuario.Id}", usuario);
+        });
+
+        app.MapPost("login", async (LoginDTO dados, AppDbContext db) =>
+        {
+            
+            var hasher = new PasswordHasher<Usuario_Class>();
+            
+            // Busca por usuário com base no nome de usuário
+            var usuarioExistente = await db.Usuarios
+                .FirstOrDefaultAsync(usuario => usuario.Usuario == dados.Usuario); //
+            var verificacao = hasher.VerifyHashedPassword(usuarioExistente, usuarioExistente.Senha, dados.Senha);
+            // Verifica se o usuário existe
+            if (usuarioExistente == null)
+            {
+                return Results.NotFound("Usuário não encontrado.");
+            }
+
+            // Verifica se a senha está correta (aqui, seria necessário criptografar a senha)
+            if (verificacao == PasswordVerificationResult.Failed) // Isso é inseguro; utilize hashing de senha!
+            {
+                return Results.Unauthorized();
+            }
+
+            return Results.Ok(new { mensagem = "Login bem-sucedido", usuario = usuarioExistente });
+        });
+
+        app.MapGet("/listar_usuarios", async (AppDbContext db) => //Read
+        {
+            var usuarios = await db.Usuarios.ToListAsync(); // lista os usuarios
+            return usuarios.Any() ? Results.Ok(usuarios) : Results.NotFound(); 
+        });
+
 
 
     }

@@ -82,3 +82,4 @@ C:\Users\Administrador\Desktop\DOTNET\backend\obj\Debug\net9.0\ProdutosCRUD.genr
 C:\Users\Administrador\Desktop\DOTNET\backend\obj\Debug\net9.0\ref\ProdutosCRUD.dll
 C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\DotNetEnv.dll
 C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Sprache.dll
+C:\Users\Administrador\Desktop\DOTNET\backend\obj\Debug\net9.0\ProdutosCRUD.sourcelink.json

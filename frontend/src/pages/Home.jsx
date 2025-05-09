@@ -27,7 +27,11 @@ function App() {
 
   const criarProduto = async () => {
     try {
-      await api.post("/adicionar_produtos", novoProduto);
+      await api.post("/adicionar_produtos", {
+        ...novoProduto,
+        valor: parseFloat(novoProduto.valor),
+        quantidade: parseInt(novoProduto.quantidade),
+      });
       setNovoProduto({ nome: "", descricao: "", valor: "", quantidade: "" });
       carregarProdutos();
     } catch (err) {
@@ -37,13 +41,16 @@ function App() {
 
   const atualizarProduto = async () => {
     try {
-      await api.patch(`/editar_produto/${editandoProduto.id}`, editandoProduto);
+      await api.patch(`/editar_produto/${editandoProduto.id}`, {
+        ...editandoProduto,
+        valor: parseFloat(editandoProduto.valor),
+        quantidade: parseInt(editandoProduto.quantidade),
+      });
       setEditandoProduto(null);
       carregarProdutos();
     } catch (err) {
       console.error("Erro ao atualizar produto", err);
     }
-    window.location.reload();
   };
 
   const deletarProduto = async (id) => {
@@ -53,7 +60,6 @@ function App() {
     } catch (err) {
       console.error("Erro ao deletar produto", err);
     }
-    window.location.reload();
   };
 
   return (
@@ -63,7 +69,7 @@ function App() {
       {/* Lista de produtos */}
       <ul>
         {produtos.map((p) => (
-          <table style={{ width: "100%", marginBottom: "1rem" }}>
+          <table key={p.id} style={{ width: "100%", marginBottom: "1rem" }}>
             <thead>
               <tr>
                 <th style={{ width: "10%" }}>Código</th>
@@ -71,39 +77,47 @@ function App() {
                 <th style={{ width: "10%" }}>Valor</th>
                 <th style={{ width: "10%" }}>Quantidade</th>
                 <th style={{ width: "50%" }}>Descrição</th>
+                <th>Ações</th>
               </tr>
             </thead>
-            <tr key={p.id}>
-              <td>
-                <strong>{p.id}</strong>
-              </td>
-              <td>
-                <strong>{p.nome}</strong>
-              </td>
-              <td>
-                <strong>{p.valor}</strong>
-              </td>
-              <td>
-                <strong>{p.quantidade}</strong>
-              </td>
-              <td>
-                <strong>{p.descricao}</strong>
-              </td>
-              <td>
-                <button
-                  onClick={() => setEditandoProduto(p)}
-                  style={{ marginLeft: 10 }}
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => deletarProduto(p.id)}
-                  style={{ marginLeft: 5 }}
-                >
-                  Deletar
-                </button>
-              </td>
-            </tr>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>{p.id}</strong>
+                </td>
+                <td>
+                  <strong>{p.nome}</strong>
+                </td>
+                <td>
+                  <strong>
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(p.valor)}
+                  </strong>
+                </td>
+                <td>
+                  <strong>{p.quantidade}</strong>
+                </td>
+                <td>
+                  <strong>{p.descricao}</strong>
+                </td>
+                <td>
+                  <button
+                    onClick={() => setEditandoProduto(p)}
+                    style={{ marginLeft: 10 }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => deletarProduto(p.id)}
+                    style={{ marginLeft: 5 }}
+                  >
+                    Deletar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
           </table>
         ))}
       </ul>
@@ -129,6 +143,7 @@ function App() {
       <input
         placeholder="Valor"
         type="number"
+        step="0.01"
         value={novoProduto.valor}
         onChange={(e) =>
           setNovoProduto({ ...novoProduto, valor: e.target.value })
@@ -144,7 +159,7 @@ function App() {
       />
       <button onClick={criarProduto}>Criar</button>
 
-      {/* Modal de edição (simples, inline) */}
+      {/* Modal de edição */}
       {editandoProduto && (
         <div
           style={{
@@ -171,6 +186,7 @@ function App() {
           />
           <input
             type="number"
+            step="0.01"
             value={editandoProduto.valor}
             onChange={(e) =>
               setEditandoProduto({ ...editandoProduto, valor: e.target.value })

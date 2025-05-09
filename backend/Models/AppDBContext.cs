@@ -11,5 +11,6 @@ namespace ProdutosCRUD.Models
 
         // Define o DbSet para a tabela 'table_produtos'
         public DbSet<Produto> Produtos { get; set; }
+        public DbSet<Usuario_Class> Usuarios { get; set; }
     }
 }
