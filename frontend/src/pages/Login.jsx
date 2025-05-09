@@ -8,6 +8,11 @@ function Login() {
     e.preventDefault();
     try {
       const res = await api.post("/login", form);
+
+      // Armazenar o token no localStorage
+      localStorage.setItem("jwtToken", res.data.token);
+      const token = localStorage.getItem("jwtToken");
+      console.log("Token:", token); // Verifica se o token está sendo recuperado corretamente
       alert(res.data.mensagem);
       window.location.href = "/home"; // Redireciona para a página inicial após o login
     } catch (err) {

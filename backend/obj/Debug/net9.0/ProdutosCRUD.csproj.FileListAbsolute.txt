@@ -83,3 +83,11 @@ C:\Users\Administrador\Desktop\DOTNET\backend\obj\Debug\net9.0\ref\ProdutosCRUD.
 C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\DotNetEnv.dll
 C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Sprache.dll
 C:\Users\Administrador\Desktop\DOTNET\backend\obj\Debug\net9.0\ProdutosCRUD.sourcelink.json
+C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\Administrador\Desktop\DOTNET\backend\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll

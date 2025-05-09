@@ -1,117 +1,183 @@
-﻿namespace ProdutosCRUD.Routes;
-using Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-
-public static class ProdutosRoute
-
+﻿namespace ProdutosCRUD.Routes
 {
-    public class LoginDTO
+    using Microsoft.AspNetCore.Authorization;
+    using Models;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.AspNetCore.Identity;
+    using System.Text;
+    using System.IdentityModel.Tokens.Jwt;
+    using Microsoft.IdentityModel.Tokens;
+    using System.Security.Claims;
+
+    public static class ProdutosRoute
     {
-        public string Usuario { get; set; }
-        public string Senha { get; set; }
-    }
-
-    public static void ProductRoutes(this WebApplication app) //extension methosd
-    {
-        app.MapGet("/", () => "API funcionando!"); //rota teste
-        
-        app.MapPost("/adicionar_produtos", async (AppDbContext db, Produto produto) => //Create
+        // DTO para login
+        public class LoginDTO
         {
-            db.Produtos.Add(produto); // adiciona produto
-            await db.SaveChangesAsync(); //salva as mudanças no banco
-            return Results.Created($"/produtos/{produto.Id}", produto);
-            
-        });
-        
-        app.MapGet("/listar_produtos", async (AppDbContext db) => //Read
-        {
-            var produtos = await db.Produtos.ToListAsync(); // lista os produtos
-            return produtos.Any() ? Results.Ok(produtos) : Results.NotFound(); 
-        });
+            public string Usuario { get; set; }
+            public string Senha { get; set; }
+        }
 
-        app.MapPatch("/editar_produto/{id}", async (int id, Produto produto, AppDbContext db) => //Update
+        // Método de extensão para adicionar as rotas
+        public static void ProductRoutes(this WebApplication app)
         {
-            // busca por id
-            var produtoExistente = await db.Produtos.FindAsync(id);
+            // Rota de teste da API
+            app.MapGet("/", () => "API funcionando!");
 
-            if (produtoExistente == null)
+            // Rota para adicionar um produto (requisição POST)
+            app.MapPost("/adicionar_produtos", [Authorize] async (AppDbContext db, Produto produto) =>
             {
-                return Results.NotFound("Produto não encontrado.");
-            }
+                db.Produtos.Add(produto); // Adiciona o produto
+                await db.SaveChangesAsync(); // Salva as alterações no banco
+                return Results.Created($"/produtos/{produto.Id}", produto); // Retorna produto criado com status 201
+            });
 
-            // atualiza os campos de produtoExistente
-            produtoExistente.Nome = produto.Nome ?? produtoExistente.Nome;
-            produtoExistente.Descricao = produto.Descricao ?? produtoExistente.Descricao;
-            produtoExistente.Valor = produto.Valor != 0 ? produto.Valor : produtoExistente.Valor;
-            produtoExistente.Quantidade = produto.Quantidade != 0 ? produto.Quantidade : produtoExistente.Quantidade;
-
-            
-            await db.SaveChangesAsync(); //salva
-            
-            return Results.Ok(produtoExistente);
-        });
-
-        app.MapDelete("deletar_produto/{id}", async (int id, AppDbContext db) =>
-        {
-            // busca por id
-            var produtoExistente = await db.Produtos.FindAsync(id);
-
-            if (produtoExistente == null)
+            // Rota para listar todos os produtos (requisição GET)
+            app.MapGet("/listar_produtos",[Authorize] async (AppDbContext db) =>
             {
-                return Results.NotFound("Produto não encontrado.");
-            }
-            db.Remove(produtoExistente);
-            
-            await db.SaveChangesAsync(); //salva
+                var produtos = await db.Produtos.ToListAsync(); // Lista todos os produtos
+                return produtos.Any() ? Results.Ok(produtos) : Results.NotFound(); // Retorna lista ou erro 404
+            });
 
-            
-            
-            return Results.Ok($"Produto com ID {id} foi deletado com sucesso.");
-        });
-        
-        app.MapPost("register", async (Usuario_Class usuario, AppDbContext db) =>
-        {
-            var hasher = new PasswordHasher<Usuario_Class>();
-            usuario.Senha = hasher.HashPassword(usuario, usuario.Senha); //define a senha de usuario como o hash da senha para o usuario especificado
-            usuario.Role = "user";
-            db.Usuarios.Add(usuario); // Adiciona o usuário ao banco
-            await db.SaveChangesAsync(); // Salva as mudanças
-
-            return Results.Created($"/usuarios/{usuario.Id}", usuario);
-        });
-
-        app.MapPost("login", async (LoginDTO dados, AppDbContext db) =>
-        {
-            
-            var hasher = new PasswordHasher<Usuario_Class>();
-            
-            // Busca por usuário com base no nome de usuário
-            var usuarioExistente = await db.Usuarios
-                .FirstOrDefaultAsync(usuario => usuario.Usuario == dados.Usuario); //
-            var verificacao = hasher.VerifyHashedPassword(usuarioExistente, usuarioExistente.Senha, dados.Senha);
-            // Verifica se o usuário existe
-            if (usuarioExistente == null)
+            // Rota para editar um produto existente (requisição PATCH)
+            app.MapPatch("/editar_produto/{id}",[Authorize] async (int id, Produto produto, AppDbContext db) =>
             {
-                return Results.NotFound("Usuário não encontrado.");
-            }
+                var produtoExistente = await db.Produtos.FindAsync(id); // Busca produto pelo ID
 
-            // Verifica se a senha está correta (aqui, seria necessário criptografar a senha)
-            if (verificacao == PasswordVerificationResult.Failed) // Isso é inseguro; utilize hashing de senha!
+                if (produtoExistente == null)
+                {
+                    return Results.NotFound("Produto não encontrado.");
+                }
+
+                // Atualiza os campos do produto, se fornecidos
+                produtoExistente.Nome = produto.Nome ?? produtoExistente.Nome;
+                produtoExistente.Descricao = produto.Descricao ?? produtoExistente.Descricao;
+                produtoExistente.Valor = produto.Valor != 0 ? produto.Valor : produtoExistente.Valor;
+                produtoExistente.Quantidade = produto.Quantidade != 0 ? produto.Quantidade : produtoExistente.Quantidade;
+
+                await db.SaveChangesAsync(); // Salva as alterações no banco
+
+                return Results.Ok(produtoExistente); // Retorna produto atualizado
+            });
+
+            // Rota para deletar um produto (requisição DELETE)
+            app.MapDelete("/deletar_produto/{id}",[Authorize] async (int id, AppDbContext db) =>
             {
-                return Results.Unauthorized();
-            }
+                var produtoExistente = await db.Produtos.FindAsync(id); // Busca produto pelo ID
 
-            return Results.Ok(new { mensagem = "Login bem-sucedido", usuario = usuarioExistente });
-        });
+                if (produtoExistente == null)
+                {
+                    return Results.NotFound("Produto não encontrado.");
+                }
 
-        app.MapGet("/listar_usuarios", async (AppDbContext db) => //Read
-        {
-            var usuarios = await db.Usuarios.ToListAsync(); // lista os usuarios
-            return usuarios.Any() ? Results.Ok(usuarios) : Results.NotFound(); 
-        });
+                db.Remove(produtoExistente); // Remove produto do banco
+                await db.SaveChangesAsync(); // Salva as alterações no banco
 
+                return Results.Ok($"Produto com ID {id} foi deletado com sucesso."); // Retorna mensagem de sucesso
+            });
 
+            // Rota para registrar um novo usuário (requisição POST)
+            app.MapPost("/register", async (Usuario_Class usuario, AppDbContext db) =>
+            {
+                var hasher = new PasswordHasher<Usuario_Class>();
+                usuario.Senha = hasher.HashPassword(usuario, usuario.Senha); // Hash da senha do usuário
+                usuario.Role = "user"; // Define role como 'user' para o usuário
+                db.Usuarios.Add(usuario); // Adiciona usuário ao banco
+                await db.SaveChangesAsync(); // Salva as alterações no banco
 
+                return Results.Created($"/usuarios/{usuario.Id}", usuario); // Retorna usuário criado com status 201
+            });
+
+            // Rota de login (requisição POST)
+            app.MapPost("/login", async (LoginDTO dados, AppDbContext db) =>
+            {
+                var hasher = new PasswordHasher<Usuario_Class>();
+
+                // Busca o usuário com base no nome de usuário fornecido
+                var usuarioExistente = await db.Usuarios
+                    .FirstOrDefaultAsync(usuario => usuario.Usuario == dados.Usuario);
+
+                // Verifica se o usuário existe
+                if (usuarioExistente == null)
+                {
+                    return Results.NotFound("Usuário não encontrado.");
+                }
+
+                // Verifica se a senha fornecida corresponde à senha criptografada
+                var verificacao = hasher.VerifyHashedPassword(usuarioExistente, usuarioExistente.Senha, dados.Senha);
+                if (verificacao == PasswordVerificationResult.Failed)
+                {
+                    return Results.Unauthorized(); // Retorna erro 401 se a senha for inválida
+                }
+
+                // Gerando o token JWT
+                var key = "sua_chave_super_secreta_256_bits_aqui1234567890"; // Chave secreta para assinatura
+                var secretKey = Encoding.ASCII.GetBytes(key); // Converte a chave para bytes
+
+                var credentials = new SigningCredentials(
+                    new SymmetricSecurityKey(secretKey),
+                    SecurityAlgorithms.HmacSha256 // Algoritmo de assinatura
+                );
+
+                // Define as claims do token (informações sobre o usuário)
+                var claims = new[]
+                {
+                    new Claim(ClaimTypes.Name, usuarioExistente.Usuario),
+                    new Claim(ClaimTypes.NameIdentifier, usuarioExistente.Id.ToString())
+                };
+
+                // Cria o token JWT
+                var token = new JwtSecurityToken(
+                    claims: claims, // Claims do token
+                    expires: DateTime.Now.AddHours(1), // Expiração do token (1 hora)
+                    signingCredentials: credentials // Credenciais de assinatura
+                );
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenString = tokenHandler.WriteToken(token); // Gera a string do token
+
+                // Retorna o token para o frontend
+                return Results.Ok(new { mensagem = "Login bem-sucedido", token = tokenString });
+            });
+
+            // Rota para listar todos os usuários (requisição GET)
+            app.MapGet("/listar_usuarios", async (AppDbContext db) =>
+            {
+                var usuarios = await db.Usuarios.ToListAsync(); // Lista todos os usuários
+                return usuarios.Any() ? Results.Ok(usuarios) : Results.NotFound(); // Retorna lista ou erro 404
+            });
+
+            // Rota para obter o perfil do usuário autenticado (requisição GET)
+            app.MapGet("/perfil", [Authorize] async (HttpContext context, AppDbContext db) =>
+            {
+                // Obtém o ID e nome do usuário a partir do token JWT
+                var usuarioIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var usuarioNomeClaim = context.User.FindFirst(ClaimTypes.Name)?.Value;
+
+                if (usuarioIdClaim == null || usuarioNomeClaim == null)
+                {
+                    return Results.Unauthorized(); // Retorna erro 401 se não houver informações no token
+                }
+
+                // Busca o usuário no banco com base no ID do JWT
+                var usuario = await db.Usuarios
+                    .FirstOrDefaultAsync(u => u.Id.ToString() == usuarioIdClaim);
+
+                if (usuario == null)
+                {
+                    return Results.NotFound("Usuário não encontrado."); // Retorna erro 404 se usuário não for encontrado
+                }
+
+                // Retorna as informações do perfil do usuário
+                return Results.Ok(new
+                {
+                    usuario.Id,
+                    usuario.Usuario,
+                    usuario.Role,
+                    usuario.Nome,
+                    usuario.Email
+                });
+            });
+        }
     }
 }

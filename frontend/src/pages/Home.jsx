@@ -3,7 +3,6 @@ import Modal from "../../components/Modal.jsx";
 
 import api from "../services/api.js";
 import "../styles/Home.css"; // Ajuste o caminho conforme a estrutura do seu projeto
-import { auto } from "openai/_shims/registry.mjs";
 
 function App() {
   const cellStyle = {
@@ -34,7 +33,11 @@ function App() {
 
   const carregarProdutos = async () => {
     try {
-      const res = await api.get("/listar_produtos");
+      const res = await api.get("/listar_produtos", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+      });
       setProdutos(res.data);
     } catch (err) {
       console.error("Erro ao carregar produtos", err);
@@ -47,12 +50,16 @@ function App() {
 
   const criarProduto = async () => {
     try {
-      await api.post("/adicionar_produtos", {
-        ...novoProduto,
-        valor: parseFloat(novoProduto.valor),
-        quantidade: parseInt(novoProduto.quantidade),
+      await api.post("/adicionar_produtos", novoProduto, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
       });
+
+      // Limpar o formulário após o envio
       setNovoProduto({ nome: "", descricao: "", valor: "", quantidade: "" });
+
+      // Recarregar a lista de produtos
       carregarProdutos();
     } catch (err) {
       console.error("Erro ao criar produto", err);
@@ -61,12 +68,23 @@ function App() {
 
   const atualizarProduto = async () => {
     try {
-      await api.patch(`/editar_produto/${editandoProduto.id}`, {
-        ...editandoProduto,
-        valor: parseFloat(editandoProduto.valor),
-        quantidade: parseInt(editandoProduto.quantidade),
-      });
+      await api.patch(
+        `/editar_produto/${editandoProduto.id}`,
+        {
+          nome: editandoProduto.nome,
+          descricao: editandoProduto.descricao,
+          valor: parseFloat(editandoProduto.valor),
+          quantidade: parseInt(editandoProduto.quantidade),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+          },
+        }
+      );
+
       setEditandoProduto(null);
+
       carregarProdutos();
     } catch (err) {
       console.error("Erro ao atualizar produto", err);
@@ -75,7 +93,11 @@ function App() {
 
   const deletarProduto = async (id) => {
     try {
-      await api.delete(`/deletar_produto/${id}`);
+      await api.delete(`/deletar_produto/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+      });
       carregarProdutos();
       window.location.reload(); // Atualiza a página após a exclusão
     } catch (err) {

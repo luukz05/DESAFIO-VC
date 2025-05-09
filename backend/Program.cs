@@ -2,28 +2,62 @@ using ProdutosCRUD.Routes;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
 using ProdutosCRUD.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+var key = "sua_chave_super_secreta_256_bits_aqui1234567890"; // 32+ caracteres
+var secretKey = Encoding.ASCII.GetBytes(key);
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Carregar variáveis de ambiente
 Env.Load();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Configuração do JWT
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Entity Framework
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
-        Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"),  // Certifique-se de usar a variável de ambiente correta
+        Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"),
         ServerVersion.AutoDetect(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"))
     ));
+
+// CORS — política nomeada
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Permite cookies ou Authorization
     });
 });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
-app.UseCors();
+
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -33,8 +67,10 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.ProductRoutes();
-
+// HTTPS redirection (pode ficar antes ou depois)
 app.UseHttpsRedirection();
+
+// Rotas
+app.ProductRoutes();
 
 app.Run();
