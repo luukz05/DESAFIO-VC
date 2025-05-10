@@ -56,7 +56,7 @@ const Controle = () => {
   const atualizarUsuario = async () => {
     try {
       await api.patch(
-        `/admin/atualizar_usuario/${editandoUsuario.id}`,
+        `/admin/atualizar_usuario_role/${editandoUsuario.id}`,
         {
           nome: editandoUsuario.nome,
           email: editandoUsuario.email,
@@ -76,18 +76,18 @@ const Controle = () => {
     }
   };
 
-  //   const deletarUsuario = async (id) => {
-  //     try {
-  //       await api.delete(`/deletar_usuario/${id}`, {
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
-  //         },
-  //       });
-  //       carregarUsuarios(perfil.id);
-  //     } catch (err) {
-  //       console.error("Erro ao deletar usuário", err);
-  //     }
-  //   };
+  const deletarUsuario = async (id) => {
+    try {
+      await api.delete(`/admin/deletar_usuario/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+      });
+      carregarUsuarios(perfil.id);
+    } catch (err) {
+      console.error("Erro ao deletar usuário", err);
+    }
+  };
 
   const cellStyle = {
     padding: "0.75rem",

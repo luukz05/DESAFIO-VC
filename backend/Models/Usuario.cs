@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema; // Para usar a anotação [T
 
 namespace ProdutosCRUD.Models
 {
+    
     [Table("table_users")]
     public class Usuario_Class
     {

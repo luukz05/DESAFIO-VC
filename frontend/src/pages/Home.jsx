@@ -328,7 +328,7 @@ function App() {
           <tbody>
             {produtos
               .filter(
-                (p) => perfil.role === "admin" || p.userId === perfil.usuario
+                (p) => perfil.role === `admin` || p.userId === perfil.usuario
               )
               .map((p, index) => (
                 <tr

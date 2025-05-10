@@ -17,14 +17,25 @@
             public string Usuario { get; set; }
             public string Senha { get; set; }
         }
+
+
         // DTO para usuario
         public class UsuarioUpdateModel
         {
+            public int Id { get; set; }
+        
             public string Nome { get; set; }
+        
             public string Email { get; set; }
+        
             public string Usuario { get; set; }
-            public string Senha { get; set; }
+        
+            public string Senha { get; set; } //criptografar
+        
+            public string Role { get; set; }
         }
+        
+
 
 
         // Método de extensão para adicionar as rotas
@@ -265,47 +276,57 @@
                     usuario.Nome,
                     usuario.Email
                 });
-            });
+            }); 
             
-            // Rota para admin atualizar qualquer usuário (requer role "admin")
-            app.MapPatch("/admin/atualizar_usuario/{id}", [Authorize] async (
+            app.MapPatch("/admin/atualizar_usuario_role/{id}",[Authorize] async (
                 int id,
-                UsuarioUpdateModel dto,
+                UsuarioUpdateModel dto, // Aqui você vai utilizar o dto para pegar a nova role
                 AppDbContext db,
                 HttpContext http) =>
             {
+                
 
-                // Busca o usuário a ser editado
+                // Buscando o usuário no banco
                 var usuario = await db.Usuarios.FindAsync(id);
                 if (usuario == null)
                 {
                     return Results.NotFound(new { mensagem = "Usuário não encontrado." });
                 }
 
-                // Atualiza os campos
-                if (!string.IsNullOrEmpty(dto.Nome))
-                    usuario.Nome = dto.Nome;
+                // Validando se a nova role é válida
+                if (dto.Role != "admin" && dto.Role != "user")
+                {
+                    return Results.BadRequest(new { mensagem = "Role inválida. Apenas 'admin' e 'user' são permitidos." });
+                }
 
-                if (!string.IsNullOrEmpty(dto.Email))
-                    usuario.Email = dto.Email;
+                // Atualizando a role
+                usuario.Role = dto.Role;
 
-                if (!string.IsNullOrEmpty(dto.Usuario))
-                    usuario.Usuario = dto.Usuario;
-                
-                if (!string.IsNullOrEmpty(dto.Usuario))
-                    usuario.Usuario = dto.Usuario;
-
-                // Salva no banco
+                // Salvando as alterações no banco
                 await db.SaveChangesAsync();
 
-                return Results.Ok(new { mensagem = "Usuário atualizado com sucesso." });
+                return Results.Ok(new { mensagem = "Role do usuário atualizada com sucesso." });
+            });
+            app.MapDelete("/admin/deletar_usuario/{id}",[Authorize] async (
+                int id,
+                AppDbContext db,
+                HttpContext http) =>
+            {
+
+                // Buscando o usuário no banco
+                var usuario = await db.Usuarios.FindAsync(id);
+                if (usuario == null)
+                {
+                    return Results.NotFound(new { mensagem = "Usuário não encontrado." });
+                }
+
+                // Removendo o usuário do banco
+                db.Usuarios.Remove(usuario);
+                await db.SaveChangesAsync(); // Salva as alterações no banco
+
+                return Results.Ok(new { mensagem = "Usuário deletado com sucesso." });
             });
 
-
-
-
-            
-            
         }
     }
 }

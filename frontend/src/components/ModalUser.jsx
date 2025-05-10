@@ -4,15 +4,6 @@ import PropTypes from "prop-types";
 const ModalUser = ({ isOpen, onClose, user, onChange, onSave }) => {
   if (!isOpen || !user) return null;
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    onChange({ ...user, [name]: value });
-  };
-
-  const handleSave = () => {
-    onSave(); // Salvar as alterações
-  };
-
   return (
     <div
       style={{
