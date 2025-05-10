@@ -192,32 +192,34 @@
             
             app.MapPatch("/atualizar_perfil", [Authorize] async (HttpContext context, AppDbContext db) =>
             {
-                // Obtém o ID do usuário a partir do token JWT
                 var usuarioIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var usuarioNomeClaim = context.User.FindFirst(ClaimTypes.Name)?.Value;
 
-                if (usuarioIdClaim == null)
+                if (usuarioIdClaim == null || usuarioNomeClaim == null)
                 {
-                    return Results.Unauthorized(); // Retorna erro 401 se não houver informações no token
+                    return Results.Unauthorized(); // Se não houver informações no token
                 }
 
-                // Busca o usuário no banco com base no ID do JWT
                 var usuario = await db.Usuarios
                     .FirstOrDefaultAsync(u => u.Id.ToString() == usuarioIdClaim);
 
                 if (usuario == null)
                 {
-                    return Results.NotFound("Usuário não encontrado."); // Retorna erro 404 se usuário não for encontrado
+                    return Results.NotFound("Usuário não encontrado.");
                 }
+
+                // Verificar se o usuário atual é um administrador
+                var isAdmin = context.User.IsInRole("admin");
 
                 // O corpo da requisição deve conter os novos dados
                 var usuarioAtualizado = await context.Request.ReadFromJsonAsync<UsuarioUpdateModel>();
 
                 if (usuarioAtualizado == null)
                 {
-                    return Results.BadRequest("Dados inválidos."); // Retorna erro 400 se os dados estiverem incorretos
+                    return Results.BadRequest("Dados inválidos.");
                 }
 
-                // Atualiza os dados do usuário
+                // Atualizando dados comuns
                 if (!string.IsNullOrEmpty(usuarioAtualizado.Nome))
                 {
                     usuario.Nome = usuarioAtualizado.Nome;
@@ -233,14 +235,28 @@
                     usuario.Usuario = usuarioAtualizado.Usuario;
                 }
 
-                // Atualiza a senha se fornecida
-                if (!string.IsNullOrEmpty(usuarioAtualizado.Senha))
+                // Se for um admin e estiver editando o próprio perfil
+                if (isAdmin && usuario.Id.ToString() == usuarioIdClaim && !string.IsNullOrEmpty(usuarioAtualizado.Senha))
                 {
+                    // O admin pode editar a senha do próprio perfil
                     var hasher = new PasswordHasher<Usuario_Class>();
-                    usuario.Senha = hasher.HashPassword(usuario, usuarioAtualizado.Senha); // Criptografa a nova senha
+                    usuario.Senha = hasher.HashPassword(usuario, usuarioAtualizado.Senha); // Hash da senha
+                }
+                // Se for um admin tentando editar a senha de outro usuário
+                else if (isAdmin && usuario.Id.ToString() != usuarioIdClaim && !string.IsNullOrEmpty(usuarioAtualizado.Senha))
+                {
+                    // Não permite que o admin altere a senha de outro usuário
+                    usuario.Senha = usuario.Senha; // Não altera a senha
                 }
 
-                // Salva as alterações no banco de dados
+                // Se for o próprio usuário, ele pode alterar a senha
+                else if (!isAdmin && !string.IsNullOrEmpty(usuarioAtualizado.Senha))
+                {
+                    var hasher = new PasswordHasher<Usuario_Class>();
+                    usuario.Senha = hasher.HashPassword(usuario, usuarioAtualizado.Senha); // Hash da senha
+                }
+
+                // Salvar as alterações
                 await db.SaveChangesAsync();
 
                 return Results.Ok(new
@@ -250,6 +266,42 @@
                     usuario.Email
                 });
             });
+            
+            // Rota para admin atualizar qualquer usuário (requer role "admin")
+            app.MapPatch("/admin/atualizar_usuario/{id}", [Authorize] async (
+                int id,
+                UsuarioUpdateModel dto,
+                AppDbContext db,
+                HttpContext http) =>
+            {
+
+                // Busca o usuário a ser editado
+                var usuario = await db.Usuarios.FindAsync(id);
+                if (usuario == null)
+                {
+                    return Results.NotFound(new { mensagem = "Usuário não encontrado." });
+                }
+
+                // Atualiza os campos
+                if (!string.IsNullOrEmpty(dto.Nome))
+                    usuario.Nome = dto.Nome;
+
+                if (!string.IsNullOrEmpty(dto.Email))
+                    usuario.Email = dto.Email;
+
+                if (!string.IsNullOrEmpty(dto.Usuario))
+                    usuario.Usuario = dto.Usuario;
+                
+                if (!string.IsNullOrEmpty(dto.Usuario))
+                    usuario.Usuario = dto.Usuario;
+
+                // Salva no banco
+                await db.SaveChangesAsync();
+
+                return Results.Ok(new { mensagem = "Usuário atualizado com sucesso." });
+            });
+
+
 
 
             

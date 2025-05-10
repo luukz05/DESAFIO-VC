@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../services/api";
 
 function Login() {
   const [form, setForm] = useState({ usuario: "", senha: "" });
+
+  useEffect(() => {
+    if (localStorage.getItem("jwtToken")) {
+      window.location.href = "/home"; // Redireciona para a página inicial se o token já estiver presente
+    }
+    localStorage.removeItem("jwtToken");
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();

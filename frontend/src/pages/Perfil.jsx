@@ -72,7 +72,7 @@ function Perfil() {
           }}
         >
           <div style={styles.profileImageContainer}>
-            <div style={styles.profileImage}>A</div>{" "}
+            <div style={styles.profileImage}>X</div>{" "}
             {/* Placeholder para imagem de perfil */}
           </div>
           {/* onSubmit={handleSubmit} */}
@@ -122,15 +122,17 @@ function Perfil() {
               <label htmlFor="senha" style={styles.label}>
                 Senha (Criptografada)
               </label>
-              <input
-                id="senha"
-                type="text"
-                value={perfil?.senha || ""}
-                onChange={(e) =>
-                  setPerfil({ ...perfil, senha: e.target.value })
-                }
-                style={styles.input}
-              />
+              <div>
+                <input
+                  id="senha"
+                  type="password"
+                  value={perfil?.senha || ""}
+                  onChange={(e) =>
+                    setPerfil({ ...perfil, senha: e.target.value })
+                  }
+                  style={styles.input}
+                />
+              </div>
             </div>
             <p style={styles.info}>Role: {perfil?.role}</p>
             <button type="submit" style={styles.button}>

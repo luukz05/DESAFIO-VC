@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Modal from "../../components/Modal.jsx";
+import Modal from "../components/Modal.jsx";
 
 import api from "../services/api.js";
 import "../styles/Home.css"; // Ajuste o caminho conforme a estrutura do seu projeto
@@ -21,7 +21,7 @@ function App() {
     fontWeight: "bold",
     cursor: "pointer",
   };
-
+  const [perfil, setPerfil] = useState(null);
   const [produtos, setProdutos] = useState([]);
   const [novoProduto, setNovoProduto] = useState({
     nome: "",
@@ -36,6 +36,7 @@ function App() {
       window.location.href = "/"; // Redireciona para a página inicial se o token não estiver presente
       return;
     }
+    fetchPerfil();
     carregarProdutos();
   }, []);
 
@@ -67,6 +68,19 @@ function App() {
       carregarProdutos();
     } catch (err) {
       console.error("Erro ao criar produto", err);
+    }
+  };
+
+  const fetchPerfil = async () => {
+    try {
+      const token = localStorage.getItem("jwtToken");
+      const res = await api.get("/perfil", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setPerfil(res.data);
+    } catch (err) {
+      console.error("Erro ao buscar perfil", err);
     }
   };
 
@@ -120,6 +134,23 @@ function App() {
       >
         <h1>Gerenciamento de Produtos</h1>
         <div style={{ display: "flex", gap: ".5rem" }}>
+          {perfil?.role === "admin" ? (
+            <button
+              style={{
+                padding: "8px",
+                backgroundColor: "#16b816",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+              }}
+              onClick={() => {
+                // Remove o token do localStorage
+                window.location.href = "/controle"; // Redireciona para a página inicial
+              }}
+            >
+              Painel de Controle
+            </button>
+          ) : null}
           <button
             style={{
               padding: "8px",
@@ -132,6 +163,7 @@ function App() {
           >
             Perfil
           </button>
+
           <button
             style={{
               padding: "8px",
