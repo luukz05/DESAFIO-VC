@@ -16,5 +16,7 @@ namespace ProdutosCRUD.Models
         public decimal Valor { get; set; }
  
         public int Quantidade { get; set; }  
+        
+        public string userId { get; set; }  
     }
 }

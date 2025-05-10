@@ -28,6 +28,7 @@ function App() {
     descricao: "",
     valor: "",
     quantidade: "",
+    userId: "",
   });
   const [editandoProduto, setEditandoProduto] = useState(null);
 
@@ -55,7 +56,17 @@ function App() {
 
   const criarProduto = async () => {
     try {
-      await api.post("/adicionar_produtos", novoProduto, {
+      // Pega o userId do perfil ou do localStorage
+      const userId = perfil.usuario; // Acessando o id do perfil, já que você tem esse dado na sua aplicação
+
+      // Atualizando o produto com o userId correto
+      const produtoComUserName = {
+        ...novoProduto,
+        userId, // ou use 'criador' se o backend espera isso
+      };
+
+      // Enviando o produto para a API
+      await api.post("/adicionar_produtos", produtoComUserName, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
@@ -297,12 +308,12 @@ function App() {
               <th
                 style={{
                   ...cellStyle,
-                  width: "80%",
+                  width: "60%",
                 }}
               >
                 Descrição
               </th>
-
+              <th style={{ ...cellStyle, width: "5%" }}>Criador</th>
               <th
                 style={{
                   ...cellStyle,
@@ -315,46 +326,65 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {produtos.map((p, index) => (
-              <tr
-                key={p.id}
-                style={{
-                  backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
-                }}
-              >
-                <td style={cellStyle}>{p.id}</td>
-                <td style={cellStyle}>{p.nome}</td>
-                <td style={cellStyle}>
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(p.valor)}
-                </td>
-                <td style={cellStyle}>{p.quantidade} un.</td>
-                <td
+            {produtos
+              .filter(
+                (p) => perfil.role === "admin" || p.userId === perfil.usuario
+              )
+              .map((p, index) => (
+                <tr
+                  key={p.id}
                   style={{
-                    ...cellStyle,
-                    textAlign: "left",
+                    backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
                   }}
                 >
-                  {p.descricao}
-                </td>
-                <td style={{ ...cellStyle, display: "flex", gap: "0.5rem" }}>
-                  <button
-                    onClick={() => setEditandoProduto(p)}
-                    style={buttonStyle}
+                  <td style={cellStyle}>{p.id}</td>
+                  <td style={cellStyle}>{p.nome}</td>
+                  <td style={cellStyle}>
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(p.valor)}
+                  </td>
+                  <td style={cellStyle}>{p.quantidade} un.</td>
+                  <td style={{ ...cellStyle, textAlign: "left" }}>
+                    {p.descricao}
+                  </td>
+                  <td style={{ ...cellStyle, textAlign: "center" }}>
+                    {p.userId}
+                  </td>
+                  <td
+                    style={{
+                      ...cellStyle,
+                      display: "flex",
+                      gap: "0.5rem",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
                   >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deletarProduto(p.id)}
-                    style={{ ...buttonStyle, backgroundColor: "#dc3545" }}
-                  >
-                    Deletar
-                  </button>
-                </td>
-              </tr>
-            ))}
+                    {perfil.role === "admin" ||
+                    (perfil.role === "user" && p.userId === perfil?.usuario) ? (
+                      <>
+                        <button
+                          onClick={() => setEditandoProduto(p)}
+                          style={buttonStyle}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => deletarProduto(p.id)}
+                          style={{ ...buttonStyle, backgroundColor: "#dc3545" }}
+                        >
+                          Deletar
+                        </button>
+                      </>
+                    ) : (
+                      <span style={{ color: "#888", fontStyle: "italic" }}>
+                        Ação exclusiva do administrador.
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
