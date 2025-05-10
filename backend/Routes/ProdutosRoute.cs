@@ -17,6 +17,15 @@
             public string Usuario { get; set; }
             public string Senha { get; set; }
         }
+        // DTO para usuario
+        public class UsuarioUpdateModel
+        {
+            public string Nome { get; set; }
+            public string Email { get; set; }
+            public string Usuario { get; set; }
+            public string Senha { get; set; }
+        }
+
 
         // Método de extensão para adicionar as rotas
         public static void ProductRoutes(this WebApplication app)
@@ -168,16 +177,83 @@
                     return Results.NotFound("Usuário não encontrado."); // Retorna erro 404 se usuário não for encontrado
                 }
 
-                // Retorna as informações do perfil do usuário
+                // Retorna as informações do perfil do usuário (sem o hash da senha)
                 return Results.Ok(new
                 {
                     usuario.Id,
                     usuario.Usuario,
                     usuario.Role,
                     usuario.Nome,
+                    usuario.Email,
+                    usuario.Senha
+                });
+            });
+
+            
+            app.MapPatch("/atualizar_perfil", [Authorize] async (HttpContext context, AppDbContext db) =>
+            {
+                // Obtém o ID do usuário a partir do token JWT
+                var usuarioIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (usuarioIdClaim == null)
+                {
+                    return Results.Unauthorized(); // Retorna erro 401 se não houver informações no token
+                }
+
+                // Busca o usuário no banco com base no ID do JWT
+                var usuario = await db.Usuarios
+                    .FirstOrDefaultAsync(u => u.Id.ToString() == usuarioIdClaim);
+
+                if (usuario == null)
+                {
+                    return Results.NotFound("Usuário não encontrado."); // Retorna erro 404 se usuário não for encontrado
+                }
+
+                // O corpo da requisição deve conter os novos dados
+                var usuarioAtualizado = await context.Request.ReadFromJsonAsync<UsuarioUpdateModel>();
+
+                if (usuarioAtualizado == null)
+                {
+                    return Results.BadRequest("Dados inválidos."); // Retorna erro 400 se os dados estiverem incorretos
+                }
+
+                // Atualiza os dados do usuário
+                if (!string.IsNullOrEmpty(usuarioAtualizado.Nome))
+                {
+                    usuario.Nome = usuarioAtualizado.Nome;
+                }
+
+                if (!string.IsNullOrEmpty(usuarioAtualizado.Email))
+                {
+                    usuario.Email = usuarioAtualizado.Email;
+                }
+
+                if (!string.IsNullOrEmpty(usuarioAtualizado.Usuario))
+                {
+                    usuario.Usuario = usuarioAtualizado.Usuario;
+                }
+
+                // Atualiza a senha se fornecida
+                if (!string.IsNullOrEmpty(usuarioAtualizado.Senha))
+                {
+                    var hasher = new PasswordHasher<Usuario_Class>();
+                    usuario.Senha = hasher.HashPassword(usuario, usuarioAtualizado.Senha); // Criptografa a nova senha
+                }
+
+                // Salva as alterações no banco de dados
+                await db.SaveChangesAsync();
+
+                return Results.Ok(new
+                {
+                    usuario.Usuario,
+                    usuario.Nome,
                     usuario.Email
                 });
             });
+
+
+            
+            
         }
     }
 }

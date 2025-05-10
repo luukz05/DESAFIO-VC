@@ -31,6 +31,14 @@ function App() {
   });
   const [editandoProduto, setEditandoProduto] = useState(null);
 
+  useEffect(() => {
+    if (!localStorage.getItem("jwtToken")) {
+      window.location.href = "/"; // Redireciona para a página inicial se o token não estiver presente
+      return;
+    }
+    carregarProdutos();
+  }, []);
+
   const carregarProdutos = async () => {
     try {
       const res = await api.get("/listar_produtos", {
@@ -43,10 +51,6 @@ function App() {
       console.error("Erro ao carregar produtos", err);
     }
   };
-
-  useEffect(() => {
-    carregarProdutos();
-  }, []);
 
   const criarProduto = async () => {
     try {
@@ -136,7 +140,10 @@ function App() {
               border: "none",
               borderRadius: "5px",
             }}
-            onClick={() => (window.location.href = "/")}
+            onClick={() => {
+              localStorage.removeItem("jwtToken"); // Remove o token do localStorage
+              window.location.href = "/"; // Redireciona para a página inicial
+            }}
           >
             Sair
           </button>

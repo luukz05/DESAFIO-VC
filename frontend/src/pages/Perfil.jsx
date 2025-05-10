@@ -5,6 +5,10 @@ function Perfil() {
   const [perfil, setPerfil] = useState(null);
 
   useEffect(() => {
+    if (!localStorage.getItem("jwtToken")) {
+      window.location.href = "/"; // Redireciona para a página inicial se o token não estiver presente
+      return;
+    }
     const fetchPerfil = async () => {
       try {
         const token = localStorage.getItem("jwtToken");
@@ -20,6 +24,33 @@ function Perfil() {
 
     fetchPerfil();
   }, []);
+
+  const atualizarPerfil = async (e) => {
+    e.preventDefault(); // Evita o recarregamento da página ao enviar o formulário
+
+    try {
+      const token = localStorage.getItem("jwtToken");
+      await api.patch(
+        "/atualizar_perfil",
+        {
+          nome: perfil.nome,
+          email: perfil.email,
+          usuario: perfil.usuario,
+          senha: perfil.senha,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      alert("Perfil atualizado com sucesso!");
+      window.location.href = "/home"; // Redireciona para a página inicial após a atualização
+    } catch (err) {
+      console.error("Erro ao atualizar perfil", err);
+      alert("Erro ao atualizar perfil. Tente novamente.");
+    }
+  };
 
   return (
     <div style={styles.container}>
@@ -45,7 +76,7 @@ function Perfil() {
             {/* Placeholder para imagem de perfil */}
           </div>
           {/* onSubmit={handleSubmit} */}
-          <form style={styles.form}>
+          <form style={styles.form} onSubmit={atualizarPerfil}>
             <p style={styles.info}>ID: {perfil?.id}</p>
             <div style={styles.inputGroup}>
               <label htmlFor="nome" style={styles.label}>
@@ -83,6 +114,20 @@ function Perfil() {
                 value={perfil?.usuario || ""}
                 onChange={(e) =>
                   setPerfil({ ...perfil, usuario: e.target.value })
+                }
+                style={styles.input}
+              />
+            </div>
+            <div style={styles.inputGroup}>
+              <label htmlFor="senha" style={styles.label}>
+                Senha (Criptografada)
+              </label>
+              <input
+                id="senha"
+                type="text"
+                value={perfil?.senha || ""}
+                onChange={(e) =>
+                  setPerfil({ ...perfil, senha: e.target.value })
                 }
                 style={styles.input}
               />
