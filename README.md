@@ -25,18 +25,18 @@ CREATE TABLE `table_produtos` (
 #### **Comando SQL para criação da tabela usuarios:**
 
 ```mysql
-CREATE TABLE `table_users` (
+CREATE TABLE `table_produtos` (
 	`id` INT(11) NOT NULL AUTO_INCREMENT,
 	`Nome` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_general_ci',
-	`Email` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_general_ci',
-	`Usuario` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_general_ci',
-	`Senha` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_general_ci',
-	`Role` ENUM('admin','user') NOT NULL DEFAULT 'user' COLLATE 'utf8mb4_general_ci',
-	PRIMARY KEY (`id`) USING BTREE,
-	UNIQUE INDEX `Usuario` (`Usuario`) USING BTREE
+	`Descricao` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`Valor` DECIMAL(10,2) NOT NULL DEFAULT '0.00',
+	`Quantidade` INT(11) NOT NULL,
+	`userId` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_general_ci',
+	PRIMARY KEY (`id`) USING BTREE
 )
 COLLATE='utf8mb4_general_ci'
 ENGINE=InnoDB
-AUTO_INCREMENT=15
+AUTO_INCREMENT=25
 ;
+
 ```
