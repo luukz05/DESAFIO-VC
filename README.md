@@ -12,14 +12,18 @@ DB_CONNECTION_STRING=server=localhost;port=<SUA PORTA>;database=<SUA DATABASE>;u
 
 ```mysql
 CREATE TABLE `table_produtos` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `Nome` varchar(50) NOT NULL,
-  `Descricao` varchar(255) NOT NULL,
-  `Valor` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `Quantidade` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `Nome` (`Nome`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`Nome` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`Descricao` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`Valor` DECIMAL(10,2) NOT NULL DEFAULT '0.00',
+	`Quantidade` INT(11) NOT NULL,
+	`userId` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_general_ci',
+	PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='utf8mb4_general_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=25
+;
 ```
 
 #### **Comando SQL para criação da tabela usuarios:**
@@ -31,12 +35,12 @@ CREATE TABLE `table_users` (
 	`Email` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_general_ci',
 	`Usuario` VARCHAR(50) NOT NULL COLLATE 'utf8mb4_general_ci',
 	`Senha` VARCHAR(255) NOT NULL COLLATE 'utf8mb4_general_ci',
-	`Role` ENUM('admin','user') NOT NULL DEFAULT 'user' COLLATE 'utf8mb4_general_ci',
+	`Role` VARCHAR(50) NOT NULL DEFAULT 'user' COLLATE 'utf8mb4_general_ci',
 	PRIMARY KEY (`id`) USING BTREE,
 	UNIQUE INDEX `Usuario` (`Usuario`) USING BTREE
 )
 COLLATE='utf8mb4_general_ci'
 ENGINE=InnoDB
-AUTO_INCREMENT=15
+AUTO_INCREMENT=19
 ;
 ```
